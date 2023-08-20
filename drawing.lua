@@ -386,4 +386,89 @@ function Library:New3DCircle()
     return _circle;
 end;
 
+function Library:New3DTriangle()
+    local _triangle = {
+        Visible      = false;
+        ZIndex       = 1;
+        Transparency = 1;
+        Color        = nColor(255, 255, 255);
+        Thickness    = 1;
+        Filled       = true;
+        
+        Position     = nVector3(0,0,0);
+        PointA       = nVector3(0,0,0);
+        PointB       = nVector3(0,0,0);
+        PointC       = nVector3(0,0,0);
+    }
+    local _defaults = _triangle;
+    _triangle.triangle = nDrawing("Triangle");
+
+    -- Update Step Function --
+    function _triangle:Update()
+        if not _triangle.Visible then 
+            _triangle.triangle.Visible = false;
+        else
+            _triangle.triangle.Visible      = _triangle.Visible      or _defaults.Visible;
+            _triangle.triangle.ZIndex       = _triangle.ZIndex       or _defaults.ZIndex;
+            _triangle.triangle.Transparency = _triangle.Transparency or _defaults.Transparency;
+            _triangle.triangle.Color        = _triangle.Color        or _defaults.Color;
+            _triangle.triangle.Thickness    = _triangle.Thickness    or _defaults.Thickness;
+            _triangle.triangle.Filled       = _triangle.Filled       or _defaults.Filled;
+
+            local pos = _triangle.Position or _defaults.Position;
+            local rot = _triangle.Rotation or _defaults.Rotation;
+            local _rotCFrame = nCFrame(pos) * nCFAngles(rad(rot.X), rad(rot.Y), rad(rot.Z));
+
+            local _points = {
+                (_rotCFrame * nCFrame(_triangle.PointA)).p;
+                (_rotCFrame * nCFrame(_triangle.PointB)).p;
+                (_rotCFrame * nCFrame(_triangle.PointC)).p;
+            };
+
+            local _vis = true;
+
+            for p = 1, #_points do
+                local _p, v = ToScreen(Camera, _points[p]);
+                local _stored = _points[p];
+                _points[p] = nVector2(_p.x, _p.y);
+
+                if not v and not checkCamView(_stored) then 
+                    _vis = false;
+                    break;
+                end;
+            end;
+
+            if _vis then
+                _triangle.triangle.PointA = _points[1];
+                _triangle.triangle.PointB = _points[2];
+                _triangle.triangle.PointC = _points[3];
+            else
+                _triangle.triangle.Visible = false;
+            end;
+        end;
+    end;
+    --------------------------
+
+    local step_Id = "3D_Triangle"..random_string(10);
+    RS:BindToRenderStep(step_Id, 1, _triangle.Update);
+
+    -- Remove Triangle --
+    function _triangle:Remove()
+        RS:UnbindFromRenderStep(step_Id)
+
+        _triangle.triangle:Remove();
+    end;
+    -----------------
+
+    return _triangle;
+end;
+
+
+
+
+
+
+
+
+
 return Library;
