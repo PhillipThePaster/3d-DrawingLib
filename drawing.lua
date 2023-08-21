@@ -308,10 +308,19 @@ function Library:New3DCircle()
     };
     local _defaults = _circle;
 
+    local function createCircleLines()
+        local numSides = settings.sides or 32; -- Change this to your desired number of sides
+        local angleIncrement = 360 / numSides;
+
+        for i = 1, numSides do
+            drawings[i] = Drawing.new('Line')
+            drawings[i].ZIndex = _circle.ZIndex or _defaults.ZIndex;
+            drawings[i].Thickness = _circle.Thickness or _defaults.Thickness;
+        end
+    end
+
     -- Update Step Function --
     local previousR = _circle.Radius or _defaults.Radius;
-    local numSides = settings.sides or 32; -- Change this to your desired number of sides
-    local angleIncrement = 360 / numSides;
 
     function _circle:Update()
         local rot = _circle.Rotation or _defaults.Rotation;
@@ -320,17 +329,16 @@ function Library:New3DCircle()
 
         local _radius = _circle.Radius or _defaults.Radius;
         if previousR ~= _radius then 
-            numSides = settings.sides or 32; -- Change this to your desired number of sides
-            angleIncrement = 360 / numSides;
+            createCircleLines()
             previousR = _radius;
         end;
 
         if not _circle.Visible then 
-            for i = 1, numSides do
+            for i = 1, #drawings do
                 drawings[i].Visible = false;
             end;
         else
-            for i = 1, numSides do
+            for i = 1, #drawings do
                 local p1 = (_rotCFrame * nCFrame(0, 0, -_radius)).p;
                 local _previousPosition, v1 = ToScreen(Camera, p1);
 
@@ -343,10 +351,8 @@ function Library:New3DCircle()
                     drawings[i].From = nVector2(_previousPosition.x, _previousPosition.y);
                     drawings[i].To = nVector2(_nextPosition.x, _nextPosition.y);
                     drawings[i].Visible = true;
-                    drawings[i].ZIndex = _circle.ZIndex or _defaults.ZIndex;
-                    drawings[i].Transparency = _circle.Transparency or _defaults.Transparency;
                     drawings[i].Color = _circle.Color or _defaults.Color;
-                    drawings[i].Thickness = _circle.Thickness or _defaults.Thickness;
+                    drawings[i].Transparency = _circle.Transparency or _defaults.Transparency;
                 else
                     drawings[i].Visible = false;
                 end;
@@ -362,7 +368,7 @@ function Library:New3DCircle()
     function _circle:Remove()
         RS:UnbindFromRenderStep(step_Id)
 
-        for i = 1, numSides do
+        for i = 1, #drawings do
             drawings[i]:Remove();
         end;
     end;
