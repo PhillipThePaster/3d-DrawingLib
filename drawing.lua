@@ -386,6 +386,92 @@ function Library:New3DCircle()
     return _circle;
 end;
 
+function Library:New3DSphere()
+    local _sphere = {
+        Visible      = false;
+        ZIndex       = 1;
+        Transparency = 1;
+        Color        = nColor(255, 255, 255);
+        Radius       = 10;
+        Position     = nVector3(0, 0, 0);
+    }
+    local _defaults = _sphere;
+    local _lines = {};
+
+    local function makeNewLines(r)
+        for l = 1, #_lines do
+            _lines[l]:Remove();
+        end;
+
+        _lines = {};
+
+        for l = 1, 1.5 * r * pi do
+            _lines[l] = nDrawing("Line");
+        end;
+    end;
+
+    -- Update Step Function --
+    local previousR = _sphere.Radius or _defaults.Radius;
+    makeNewLines(previousR);
+
+    function _sphere:Update()
+        local pos = _sphere.Position or _defaults.Position;
+
+        local _radius = _sphere.Radius or _defaults.Radius;
+        if previousR ~= _radius then
+            makeNewLines(_radius);
+        end;
+
+        if not _sphere.Visible then
+            for ln = 1, #_lines do
+                _lines[ln].Visible = false;
+            end;
+        else
+            local rotIncrement = 360 / #_lines;
+            local rotY = 0;
+
+            for l = 1, #_lines do
+                if _lines[l] then
+                    _lines[l].Visible = _sphere.Visible or _defaults.Visible;
+                    _lines[l].ZIndex = _sphere.ZIndex or _defaults.ZIndex;
+                    _lines[l].Transparency = _sphere.Transparency or _defaults.Transparency;
+                    _lines[l].Color = _sphere.Color or _defaults.Color;
+
+                    local p1 = pos + Vector3.new(_radius * math.cos(math.rad(rotY)), 0, _radius * math.sin(math.rad(rotY)))
+                    local _previousPosition, v1 = ToScreen(Camera, p1);
+
+                    rotY = rotY + rotIncrement;
+
+                    local p2 = pos + Vector3.new(_radius * math.cos(math.rad(rotY)), 0, _radius * math.sin(math.rad(rotY)))
+                    local _nextPosition, v2 = ToScreen(Camera, p2);
+
+                    if (v1 and v2) or (checkCamView(p1) and checkCamView(p2)) then
+                        _lines[l].From = Vector2.new(_previousPosition.x, _previousPosition.y);
+                        _lines[l].To = Vector2.new(_nextPosition.x, _nextPosition.y);
+                    else
+                        _lines[l].Visible = false;
+                    end;
+                end;
+            end;
+        end;
+
+        previousR = _sphere.Radius or _defaults.Radius;
+    end;
+
+    local step_Id = "3D_Sphere" .. random_string(10);
+    RS:BindToRenderStep(step_Id, 1, _sphere.Update);
+
+    -- Remove Sphere --
+    function _sphere:Remove()
+        RS:UnbindFromRenderStep(step_Id)
+
+        for ln = 1, #_lines do
+            _lines[ln]:Remove();
+        end;
+    end;
+
+    return _sphere;
+end;
 
 
 
