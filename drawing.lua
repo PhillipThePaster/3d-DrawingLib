@@ -394,69 +394,66 @@ function Library:New3DSphere()
         Color        = nColor(255, 255, 255);
         Radius       = 10;
         Position     = nVector3(0, 0, 0);
+        Segments     = 16; -- Number of segments for the sphere
     }
     local _defaults = _sphere;
-    local _lines = {};
-
-    local function makeNewLines(r)
-        for l = 1, #_lines do
-            _lines[l]:Remove();
-        end;
-
-        _lines = {};
-
-        for l = 1, 1.5 * r * pi do
-            _lines[l] = nDrawing("Line");
-        end;
-    end;
+    local _mesh = nDrawing("Mesh");
 
     -- Update Step Function --
-    local previousR = _sphere.Radius or _defaults.Radius;
-    makeNewLines(previousR);
-
     function _sphere:Update()
-        local pos = _sphere.Position or _defaults.Position;
-
-        local _radius = _sphere.Radius or _defaults.Radius;
-        if previousR ~= _radius then
-            makeNewLines(_radius);
-        end;
-
         if not _sphere.Visible then
-            for ln = 1, #_lines do
-                _lines[ln].Visible = false;
-            end;
+            _mesh.Visible = false;
         else
-            local rotIncrement = 360 / #_lines;
-            local rotY = 0;
+            _mesh.Visible = _sphere.Visible or _defaults.Visible;
+            _mesh.ZIndex = _sphere.ZIndex or _defaults.ZIndex;
+            _mesh.Transparency = _sphere.Transparency or _defaults.Transparency;
+            _mesh.Color = _sphere.Color or _defaults.Color;
 
-            for l = 1, #_lines do
-                if _lines[l] then
-                    _lines[l].Visible = _sphere.Visible or _defaults.Visible;
-                    _lines[l].ZIndex = _sphere.ZIndex or _defaults.ZIndex;
-                    _lines[l].Transparency = _sphere.Transparency or _defaults.Transparency;
-                    _lines[l].Color = _sphere.Color or _defaults.Color;
+            local pos = _sphere.Position or _defaults.Position;
+            local radius = _sphere.Radius or _defaults.Radius;
+            local segments = _sphere.Segments or _defaults.Segments;
 
-                    local p1 = pos + Vector3.new(_radius * math.cos(math.rad(rotY)), 0, _radius * math.sin(math.rad(rotY)))
-                    local _previousPosition, v1 = ToScreen(Camera, p1);
+            local vertices = {};
 
-                    rotY = rotY + rotIncrement;
+            for i = 0, segments do
+                local theta1 = (i / segments) * math.pi * 2;
+                local theta2 = ((i + 1) / segments) * math.pi * 2;
 
-                    local p2 = pos + Vector3.new(_radius * math.cos(math.rad(rotY)), 0, _radius * math.sin(math.rad(rotY)))
-                    local _nextPosition, v2 = ToScreen(Camera, p2);
+                for j = 0, segments do
+                    local phi1 = (j / segments) * math.pi;
+                    local phi2 = ((j + 1) / segments) * math.pi;
 
-                    if (v1 and v2) or (checkCamView(p1) and checkCamView(p2)) then
-                        _lines[l].From = Vector2.new(_previousPosition.x, _previousPosition.y);
-                        _lines[l].To = Vector2.new(_nextPosition.x, _nextPosition.y);
-                    else
-                        _lines[l].Visible = false;
-                    end;
-                end;
-            end;
+                    local x1 = radius * math.sin(phi1) * math.cos(theta1);
+                    local y1 = radius * math.sin(phi1) * math.sin(theta1);
+                    local z1 = radius * math.cos(phi1);
+
+                    local x2 = radius * math.sin(phi1) * math.cos(theta2);
+                    local y2 = radius * math.sin(phi1) * math.sin(theta2);
+                    local z2 = radius * math.cos(phi1);
+
+                    local x3 = radius * math.sin(phi2) * math.cos(theta1);
+                    local y3 = radius * math.sin(phi2) * math.sin(theta1);
+                    local z3 = radius * math.cos(phi2);
+
+                    local x4 = radius * math.sin(phi2) * math.cos(theta2);
+                    local y4 = radius * math.sin(phi2) * math.sin(theta2);
+                    local z4 = radius * math.cos(phi2);
+
+                    table.insert(vertices, Vector3.new(x1, y1, z1) + pos);
+                    table.insert(vertices, Vector3.new(x2, y2, z2) + pos);
+                    table.insert(vertices, Vector3.new(x4, y4, z4) + pos);
+
+                    table.insert(vertices, Vector3.new(x1, y1, z1) + pos);
+                    table.insert(vertices, Vector3.new(x4, y4, z4) + pos);
+                    table.insert(vertices, Vector3.new(x3, y3, z3) + pos);
+                end
+            end
+
+            _mesh.MeshId = Drawing.new("MeshPart")
+            _mesh.MeshId.VertexList = vertices
         end;
-
-        previousR = _sphere.Radius or _defaults.Radius;
     end;
+    --------------------------
 
     local step_Id = "3D_Sphere" .. random_string(10);
     RS:BindToRenderStep(step_Id, 1, _sphere.Update);
@@ -464,14 +461,12 @@ function Library:New3DSphere()
     -- Remove Sphere --
     function _sphere:Remove()
         RS:UnbindFromRenderStep(step_Id)
-
-        for ln = 1, #_lines do
-            _lines[ln]:Remove();
-        end;
+        _mesh:Remove()
     end;
 
     return _sphere;
 end;
+
 
 
 
