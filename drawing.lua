@@ -393,10 +393,10 @@ function Library:New3DPyramid()
         Transparency = 1;
         Color        = nColor(255, 255, 255);
         
-        Position     = nVector3(0,0,0);
-        BaseSize     = nVector2(0,0);
+        Position     = nVector3(0, 0, 0);
+        BaseSize     = nVector2(0, 0);
         Height       = 0;
-        Rotation     = nVector3(0,0,0);
+        Rotation     = nVector3(0, 0, 0);
     }
     local _defaults = _pyramid;
     local _lines = {};
@@ -405,8 +405,6 @@ function Library:New3DPyramid()
         for l = 1, 4 do
             _lines[l] = nDrawing("Line");
         end;
-
-        _lines[5] = nDrawing("Line");
     end;
 
     -- Update Step Function --
@@ -436,27 +434,8 @@ function Library:New3DPyramid()
                     _lines[l].Color        = _pyramid.Color        or _defaults.Color;
 
                     local p1, p2, p3, p4;
-                    local topPoint;
 
                     if l == 1 then
-                        p1 = (_rotCFrame * nCFrame(_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
-                        p2 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
-                        p3 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, -_baseSize.Y / 2)).p;
-                        p4 = (_rotCFrame * nCFrame(_baseSize.X / 2, 0, -_baseSize.Y / 2)).p;
-                        topPoint = (_rotCFrame * nCFrame(0, _height, 0)).p;
-                    elseif l == 2 then
-                        p1 = (_rotCFrame * nCFrame(_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
-                        p2 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
-                        topPoint = (_rotCFrame * nCFrame(0, _height, 0)).p;
-                    elseif l == 3 then
-                        p2 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
-                        p3 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, -_baseSize.Y / 2)).p;
-                        topPoint = (_rotCFrame * nCFrame(0, _height, 0)).p;
-                    elseif l == 4 then
-                        p3 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, -_baseSize.Y / 2)).p;
-                        p4 = (_rotCFrame * nCFrame(_baseSize.X / 2, 0, -_baseSize.Y / 2)).p;
-                        topPoint = (_rotCFrame * nCFrame(0, _height, 0)).p;
-                    elseif l == 5 then
                         p1 = (_rotCFrame * nCFrame(_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
                         p2 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, _baseSize.Y / 2)).p;
                         p3 = (_rotCFrame * nCFrame(-_baseSize.X / 2, 0, -_baseSize.Y / 2)).p;
@@ -467,9 +446,8 @@ function Library:New3DPyramid()
                     local _previousPosition2, v2 = ToScreen(Camera, p2);
                     local _previousPosition3, v3 = ToScreen(Camera, p3);
                     local _previousPosition4, v4 = ToScreen(Camera, p4);
-                    local _previousTopPosition, v5 = ToScreen(Camera, topPoint);
 
-                    if (v1 and v2 and v3 and v4 and v5) or (checkCamView(p1) and checkCamView(p2) and checkCamView(p3) and checkCamView(p4) and checkCamView(topPoint)) then
+                    if (v1 and v2 and v3 and v4) or (checkCamView(p1) and checkCamView(p2) and checkCamView(p3) and checkCamView(p4)) then
                         _lines[l].From = nVector2(_previousPosition1.x, _previousPosition1.y);
                         _lines[l].To = nVector2(_previousPosition2.x, _previousPosition2.y);
                         if l == 1 then
