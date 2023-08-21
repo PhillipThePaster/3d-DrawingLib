@@ -307,23 +307,11 @@ function Library:New3DCircle()
         Rotation     = nVector2(0,0);
     };
     local _defaults = _circle;
-    local _lines = {};
-
-    local function makeNewLines(r)
-        for l = 1, #_lines do
-            _lines[l]:Remove();
-        end;
-
-        _lines = {};
-        
-        for l = 1, 1.5*r*pi do
-            _lines[l] = nDrawing("Line");
-        end;
-    end;
 
     -- Update Step Function --
     local previousR = _circle.Radius or _defaults.Radius;
-    makeNewLines(previousR);
+    local numSides = settings.sides or 32; -- Change this to your desired number of sides
+    local angleIncrement = 360 / numSides;
 
     function _circle:Update()
         local rot = _circle.Rotation or _defaults.Rotation;
@@ -331,42 +319,39 @@ function Library:New3DCircle()
         local _rotCFrame = nCFrame(pos) * nCFAngles(rad(rot.X), 0, rad(rot.Y));
 
         local _radius = _circle.Radius or _defaults.Radius;
-        if previousR ~= _radius then makeNewLines(_radius) end;
-
-        local _increm = 360/#_lines;
+        if previousR ~= _radius then 
+            numSides = settings.sides or 32; -- Change this to your desired number of sides
+            angleIncrement = 360 / numSides;
+            previousR = _radius;
+        end;
 
         if not _circle.Visible then 
-            for ln = 1, #_lines do
-                _lines[ln].Visible = false;
+            for i = 1, numSides do
+                drawings[i].Visible = false;
             end;
         else
-            for l = 1, #_lines do
-                if _lines[l] then
-                    _lines[l].Visible      = _circle.Visible      or _defaults.Visible;
-                    _lines[l].ZIndex       = _circle.ZIndex       or _defaults.ZIndex;
-                    _lines[l].Transparency = _circle.Transparency or _defaults.Transparency;
-                    _lines[l].Color        = _circle.Color        or _defaults.Color;
-                    _lines[l].Thickness    = _circle.Thickness    or _defaults.Thickness;
+            for i = 1, numSides do
+                local p1 = (_rotCFrame * nCFrame(0, 0, -_radius)).p;
+                local _previousPosition, v1 = ToScreen(Camera, p1);
 
-                    local p1 = (_rotCFrame * nCFrame(0, 0, -_radius)).p;
-                    local _previousPosition, v1 = ToScreen(Camera, p1);
+                _rotCFrame = _rotCFrame * nCFAngles(0, rad(angleIncrement), 0);
 
-                    _rotCFrame = _rotCFrame * nCFAngles(0, rad(_increm), 0);
+                local p2 = (_rotCFrame * nCFrame(0, 0, -_radius)).p;
+                local _nextPosition, v2 = ToScreen(Camera, p2);
 
-                    local p2 = (_rotCFrame * nCFrame(0, 0, -_radius)).p;
-                    local _nextPosition, v2 = ToScreen(Camera, p2);
-
-                    if (v1 and v2) or (checkCamView(p1) and checkCamView(p2)) then
-                        _lines[l].From = nVector2(_previousPosition.x, _previousPosition.y);
-                        _lines[l].To = nVector2(_nextPosition.x, _nextPosition.y);
-                    else
-                        _lines[l].Visible = false;
-                    end;
+                if (v1 and v2) or (checkCamView(p1) and checkCamView(p2)) then
+                    drawings[i].From = nVector2(_previousPosition.x, _previousPosition.y);
+                    drawings[i].To = nVector2(_nextPosition.x, _nextPosition.y);
+                    drawings[i].Visible = true;
+                    drawings[i].ZIndex = _circle.ZIndex or _defaults.ZIndex;
+                    drawings[i].Transparency = _circle.Transparency or _defaults.Transparency;
+                    drawings[i].Color = _circle.Color or _defaults.Color;
+                    drawings[i].Thickness = _circle.Thickness or _defaults.Thickness;
+                else
+                    drawings[i].Visible = false;
                 end;
             end;
         end;
-
-        previousR = _circle.Radius or _defaults.Radius;
     end;
     --------------------------
 
@@ -377,14 +362,15 @@ function Library:New3DCircle()
     function _circle:Remove()
         RS:UnbindFromRenderStep(step_Id)
 
-        for ln = 1, #_lines do
-            _lines[ln]:Remove();
+        for i = 1, numSides do
+            drawings[i]:Remove();
         end;
     end;
     -----------------
 
     return _circle;
 end;
+
 
 
 
