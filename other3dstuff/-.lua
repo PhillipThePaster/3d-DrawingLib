@@ -5,14 +5,6 @@ local PlayersService = game:GetService("Players");
 local LocalPlayer = PlayersService.LocalPlayer
 local Camera = workspace.CurrentCamera;
 local Lines = {};
-local espsets = {
-    Box = true,
-    teamCheck = true,
-    playerColor = Color3.fromRGB(0, 255, 0),
-    Thickness = 1,
-    Transparency = 1,
-    distanceLimit = 100, -- Add the distance limit here
-}
 
 local function HasCharacter(Player)
     return Player.Character and Player.Character:FindFirstChild("HumanoidRootPart");
